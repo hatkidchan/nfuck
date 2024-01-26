@@ -1,0 +1,3 @@
+*.py[cow]
+__pycache__/
+venv/
