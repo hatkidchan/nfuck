@@ -26,10 +26,13 @@ def explain_verification(content: str) -> list[tuple[float, str, Match]]:
             result.append((score, explanation, match))
     return result
 
+def get_random_useragent() -> str:
+    return choice(USER_AGENT)
+
 async def verify_link(url: str) -> float:
     total_score = 0
     async with AsyncClient(
-        headers={"User-Agent": choice(USER_AGENT)}
+        headers={"User-Agent": get_random_useragent()}
     ) as client:
         data = await client.get(url)
         for score, _, _ in explain_verification(data.text):
