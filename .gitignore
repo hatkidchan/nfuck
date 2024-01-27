@@ -1,3 +1,5 @@
 *.py[cow]
 __pycache__/
 venv/
+db.db3
+state
