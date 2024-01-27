@@ -1,0 +1,37 @@
+from httpx import AsyncClient
+from re import Match, Pattern, compile as regexp, IGNORECASE
+from random import choice
+
+USER_AGENT = [
+    "Mozilla/5.0 (X11; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0"
+]
+
+REGEX_PATTERNS: list[tuple[float, Pattern, str]] = [
+    (1.0, regexp(r"\bp2e\b", IGNORECASE), "Play-to-earn keyword"),
+    (5.0, regexp(r"play\-to\-earn", IGNORECASE), "Play-to-earn directly"),
+    (3.0, regexp(r"encryption\.js", IGNORECASE), "Metamask"),
+    (2.0, regexp(r"\bweb3\b", IGNORECASE), "Web3 mention"),
+    (1.0, regexp(r"\bnft\b", IGNORECASE), "NFT mention"),
+    (0.7, regexp(r"\belon\b", IGNORECASE), "Cryptobro Elon"),
+    (0.5, regexp(r"\bbiden\b", IGNORECASE), "Sleepy Joe"),
+    (1.0, regexp(r"\bcrypto\b", IGNORECASE), "Crypto mention"),
+]
+
+MAX_SCORE = sum(t[0] for t in REGEX_PATTERNS)
+
+def explain_verification(content: str) -> list[tuple[float, str, Match]]:
+    result: list[tuple[float, str, Match]] = []
+    for score, regex, explanation in REGEX_PATTERNS:
+        for match in regex.finditer(content):
+            result.append((score, explanation, match))
+    return result
+
+async def verify_link(url: str) -> float:
+    total_score = 0
+    async with AsyncClient(
+        headers={"User-Agent": choice(USER_AGENT)}
+    ) as client:
+        data = await client.get(url)
+        for score, _, _ in explain_verification(data.text):
+            total_score += score
+    return total_score / MAX_SCORE
