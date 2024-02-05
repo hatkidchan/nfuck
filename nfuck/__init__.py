@@ -1,3 +1,4 @@
+from os import getenv
 from aiogram import Dispatcher
 from aiogram.types import Message
 from aiogram.filters import Command
@@ -13,11 +14,7 @@ from nfuck.utils import sanitize_link
 
 dp = Dispatcher()
 
-# @dp.message(Command("dd"))
-# async def on_dd(message: Message):
-#     if message.reply_to_message:
-#         await message.reply_to_message.delete()
-
+SILENT_REMOVAL_IDS: set[int] = set(list(map(int, getenv("SILENT_REMOVAL_IDS", "").split(","))))
 
 @dp.message(Command("check"))
 async def on_check(message: Message):
@@ -68,7 +65,7 @@ async def on_message(message: Message):
             if confidence > 0.9:
                 detected_links.append((entity.url, confidence))
     if detected_links:
-        if message.from_user:
+        if message.from_user and message.chat.id not in SILENT_REMOVAL_IDS:
             await message.reply(
                 str.join(
                     "\n",
