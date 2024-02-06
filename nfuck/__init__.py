@@ -3,6 +3,7 @@ from aiogram import Dispatcher
 from aiogram.types import Message
 from aiogram.filters import Command
 from httpx import AsyncClient
+from asyncio import sleep
 
 from nfuck.link_verifier import (
     explain_verification,
@@ -66,7 +67,7 @@ async def on_message(message: Message):
                 detected_links.append((entity.url, confidence))
     if detected_links:
         if message.from_user and message.chat.id not in SILENT_REMOVAL_IDS:
-            await message.reply(
+            msg = await message.reply(
                 str.join(
                     "\n",
                     [
@@ -81,8 +82,13 @@ async def on_message(message: Message):
                             ],
                         ),
                         f"Sender: {message.from_user.full_name} #{message.from_user.id} (@{message.from_user.username})",
+                        "(message will be deleted in 10 seconds)"
                     ],
                 ),
                 parse_mode="html",
             )
-        await message.delete()
+            await message.delete()
+            await sleep(10)
+            await msg.delete()
+        else:
+            await message.delete()
