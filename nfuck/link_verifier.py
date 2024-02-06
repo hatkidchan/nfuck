@@ -19,6 +19,8 @@ REGEX_PATTERNS: list[tuple[float, Pattern, str]] = [
     (0.7, regexp(r"\belon\b", IGNORECASE), "Cryptobro Elon"),
     (0.5, regexp(r"\bbiden\b", IGNORECASE), "Sleepy Joe"),
     (1.0, regexp(r"\bcrypto\b", IGNORECASE), "Crypto mention"),
+    (3.0, regexp(r"What The Fluff | CLAIM ALL !", IGNORECASE), "WTF Claim all"),
+    (3.0, regexp(r"Suckerberg's Nutsack", IGNORECASE), "Suckerberg balls"),
 ]
 
 MAX_SCORE = sum(t[0] for t in REGEX_PATTERNS)
