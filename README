@@ -1,3 +1,9 @@
 Running it:
 TG_BOT_TOKEN=blahblahblah DB_PATH=/path/to/db.db3 python3 -m nfuck
 Database is not used yet
+
+Running in Docker:
+docker build -t nfuck .
+docker run --restart=unless-stopped --name bot-nfuck -e TG_BOT_TOKEN=123:blah -e DB_PATH=/app/db.db3 -d nfuck
+
+You can also add `-e SILENT_REMOVAL_IDS=123,456` with a comma-separated list of chats where it should silently remove messages without notifying anyone
