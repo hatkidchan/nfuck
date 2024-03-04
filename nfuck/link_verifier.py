@@ -2,9 +2,15 @@ from httpx import AsyncClient
 from re import Match, Pattern, compile as regexp, IGNORECASE
 from random import choice
 from logging import DEBUG, getLogger
+from os import getenv
+from urllib.parse import urlparse
+from fnmatch import fnmatch
 
 logger = getLogger("nfuck.link_verifier")
 logger.setLevel(DEBUG)
+
+# TODO: get it out of here somehow
+DOMAIN_WHITELIST: set[str] = set(filter(lambda v: v, getenv("DOMAIN_WHITELIST", "").split(",")))
 
 USER_AGENT = [
     "Mozilla/5.0 (X11; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0"
@@ -43,6 +49,10 @@ async def verify_link(url: str) -> float:
     logger.info("Verifying link %s", url)
     if not url.startswith("http"):
         url = "https://" + url
+    domain = urlparse(url).netloc
+    if any(fnmatch(domain, pat) for pat in DOMAIN_WHITELIST):
+        logger.info("Score for %r: 0 (whitelisted domain)", url)
+        return 0
     async with AsyncClient(
         headers={"User-Agent": get_random_useragent()}
     ) as client:
