@@ -16,6 +16,10 @@ USER_AGENT = [
     "Mozilla/5.0 (X11; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0"
 ]
 
+URL_PATTERNS: list[tuple[float, Pattern, str]] = [
+    (10.0, regexp(r"https://t.me/\w+[bB]ot/claim"), "Telegram Bot claim link")
+]
+
 REGEX_PATTERNS: list[tuple[float, Pattern, str]] = [
     (1.0, regexp(r"\bp2e\b", IGNORECASE), "Play-to-earn keyword"),
     (5.0, regexp(r"play\-to\-earn", IGNORECASE), "Play-to-earn directly"),
@@ -32,7 +36,8 @@ REGEX_PATTERNS: list[tuple[float, Pattern, str]] = [
     (3.0, regexp(r"A collection of \w+ NFTs", IGNORECASE), "Collection of [some] NFTs"),
 ]
 
-MAX_SCORE = sum(t[0] for t in REGEX_PATTERNS)
+MAX_REGEX_SCORE = 30 # sum(t[0] for t in REGEX_PATTERNS)
+MAX_URL_SCORE = 10
 
 
 def explain_verification(content: str) -> list[tuple[float, str, Match]]:
@@ -56,6 +61,11 @@ async def verify_link(url: str) -> float:
     if any(fnmatch(domain, pat) for pat in DOMAIN_WHITELIST):
         logger.info("Score for %r: 0 (whitelisted domain)", url)
         return 0
+    for score, regex, explanation in REGEX_PATTERNS:
+        for match in regex.finditer(url):
+            total_score += score
+    if total_score >= MAX_REGEX_SCORE:
+        return total_score / MAX_REGEX_SCORE
     async with AsyncClient(
         headers={"User-Agent": get_random_useragent()}
     ) as client:
@@ -64,4 +74,4 @@ async def verify_link(url: str) -> float:
             logger.debug("%s: %s at %d", url, explanation, match.start())
             total_score += score
     logger.info("Score for %r: %f", url, total_score)
-    return total_score / MAX_SCORE
+    return total_score / MAX_REGEX_SCORE

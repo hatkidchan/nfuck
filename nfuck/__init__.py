@@ -15,7 +15,8 @@ from nfuck.utils import sanitize_link
 
 dp = Dispatcher()
 
-SILENT_REMOVAL_IDS: set[int] = set(list(map(int, getenv("SILENT_REMOVAL_IDS", "").split(","))))
+SILENT_REMOVAL_IDS: set[int] = set(list(map(int, filter(lambda v: v, getenv("SILENT_REMOVAL_IDS", "").split(",")))))
+
 
 @dp.message(Command("check"))
 async def on_check(message: Message):
@@ -66,8 +67,12 @@ async def on_message(message: Message):
             if confidence > 0.9:
                 detected_links.append((entity.url, confidence))
     if detected_links:
+        await message.delete()
         if message.from_user and message.chat.id not in SILENT_REMOVAL_IDS:
-            msg = await message.reply(
+            if not message.bot:
+                raise RuntimeError("what")
+            msg = await message.bot.send_message(
+                message.chat.id,
                 str.join(
                     "\n",
                     [
@@ -82,13 +87,11 @@ async def on_message(message: Message):
                             ],
                         ),
                         f"Sender: {message.from_user.full_name} #{message.from_user.id} (@{message.from_user.username})",
-                        "(message will be deleted in 10 seconds)"
+                        "(message will be deleted in 10 seconds)",
+                        "False positive? Report <a href=\"https://forms.gle/cwj565M3y928M47g7\">here</a>!"
                     ],
                 ),
                 parse_mode="html",
             )
-            await message.delete()
             await sleep(10)
             await msg.delete()
-        else:
-            await message.delete()
