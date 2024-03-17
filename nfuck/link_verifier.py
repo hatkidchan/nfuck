@@ -61,7 +61,7 @@ async def verify_link(url: str) -> float:
     if any(fnmatch(domain, pat) for pat in DOMAIN_WHITELIST):
         logger.info("Score for %r: 0 (whitelisted domain)", url)
         return 0
-    for score, regex, explanation in REGEX_PATTERNS:
+    for score, regex, explanation in URL_PATTERNS:
         for match in regex.finditer(url):
             total_score += score
     async with AsyncClient(
