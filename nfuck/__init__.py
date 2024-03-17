@@ -57,7 +57,7 @@ def form_for(message: Message, link: str) -> str:
     assert message.from_user != None
     params = {
         "entry.1873578193": link,
-        "entry.1733286388": message.from_user.username
+        "entry.1733286388": f"@{message.from_user.username}" if message.from_user.username else ""
     }
     return f"{FORM_URL}?{urlencode(params)}"
 
