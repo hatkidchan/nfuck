@@ -4,6 +4,7 @@ from aiogram.types import Message
 from aiogram.filters import Command
 from httpx import AsyncClient
 from asyncio import sleep
+from urllib.parse import urlencode
 
 from nfuck.link_verifier import (
     explain_verification,
@@ -51,6 +52,15 @@ async def on_check(message: Message):
     else:
         await message.reply(":shrug:")
 
+FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScPby92blkuDRcbsb9kAQ35tK3EXYtXVFwgGBMlp6REw_ZNgw/viewform"
+def form_for(message: Message, link: str) -> str:
+    assert message.from_user != None
+    params = {
+        "entry.1873578193": link,
+        "entry.1733286388": message.from_user.username
+    }
+    return f"{FORM_URL}?{urlencode(params)}"
+
 
 @dp.message()
 async def on_message(message: Message):
@@ -87,11 +97,11 @@ async def on_message(message: Message):
                             ],
                         ),
                         f"Sender: {message.from_user.full_name} #{message.from_user.id} (@{message.from_user.username})",
-                        "(message will be deleted in 10 seconds)",
-                        "False positive? Report <a href=\"https://forms.gle/cwj565M3y928M47g7\">here</a>!"
+                        "(message will be deleted in 20 seconds)",
+                        "False positive? Report <a href=\"%s\">here</a>!" % form_for(message, detected_links[0][0])
                     ],
                 ),
                 parse_mode="html",
             )
-            await sleep(10)
+            await sleep(20)
             await msg.delete()
