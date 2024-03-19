@@ -52,6 +52,31 @@ async def on_check(message: Message):
     else:
         await message.reply(":shrug:")
 
+@dp.message(Command("force"))
+async def on_force(message: Message):
+    if not message.reply_to_message:
+        return
+    detected_links: list[tuple[str, float]] = []
+    for entity in message.reply_to_message.entities or []:
+        if entity.type in ("text_link", "url") and message.text:
+            if entity.type == "url":
+                entity.url = message.text[
+                    entity.offset : entity.offset + entity.length
+                ]
+            if not entity.url:
+                continue
+            confidence = await verify_link(entity.url)
+            detected_links.append((entity.url, confidence))
+    n_links = len(detected_links)
+    n_harmful = len(list(filter(lambda lnk: lnk[1] > 0.9, detected_links)))
+    if n_harmful > 0:
+        await message.reply_to_message.delete()
+        await message.reply(f"Found {n_links} links, {n_harmful} of which look sus")
+    elif not detected_links:
+        await message.reply(f"No links found")
+    else:
+        await message.reply(f"Out of {n_links}, none pass minimal threshold")
+
 FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScPby92blkuDRcbsb9kAQ35tK3EXYtXVFwgGBMlp6REw_ZNgw/viewform"
 def form_for(message: Message, link: str) -> str:
     assert message.from_user != None

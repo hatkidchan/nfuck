@@ -24,8 +24,8 @@ URL_PATTERNS: list[tuple[float, Pattern, str]] = [
 REGEX_PATTERNS: list[tuple[float, Pattern, str]] = [
     (1.0, regexp(r"\bp2e\b", IGNORECASE), "Play-to-earn keyword"),
     (5.0, regexp(r"play\-to\-earn", IGNORECASE), "Play-to-earn directly"),
-    (3.0, regexp(r"encryption\.js", IGNORECASE), "encryption.js"),
-    (3.0, regexp(r"web3-ethers\.js", IGNORECASE), "web3-ethers.js"),
+    (10.0, regexp(r"encryption\.js", IGNORECASE), "encryption.js"),
+    (10.0, regexp(r"web3-ethers\.js", IGNORECASE), "web3-ethers.js"),
     (1.0, regexp(r"\bweb3\b", IGNORECASE), "Web3 mention"),
     (1.0, regexp(r"\bnft\b", IGNORECASE), "NFT mention"),
     (3.0, regexp(r"What The Fluff | CLAIM ALL !", IGNORECASE), "WTF Claim all"),
@@ -35,6 +35,8 @@ REGEX_PATTERNS: list[tuple[float, Pattern, str]] = [
     (3.0, regexp(r"Discover what \&nbsp;\w+ will become your", IGNORECASE), "Some random button from common scam website"),
     (3.0, regexp(r"fluff (token|coin)", IGNORECASE), "fluff token/coin"),
     (3.0, regexp(r"A collection of \w+ NFTs", IGNORECASE), "Collection of [some] NFTs"),
+    (5.0, regexp(r"claim free \$\w+", IGNORECASE), "Claim free shitcoin"),
+    (6.0, regexp(r"melondrop.app", IGNORECASE), "Sus developer URL")
 ]
 
 MAX_SCORE = 30 # sum(t[0] for t in REGEX_PATTERNS)
