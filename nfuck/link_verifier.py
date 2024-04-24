@@ -67,7 +67,9 @@ async def verify_link(url: str) -> float:
         for match in regex.finditer(url):
             total_score += score
     async with AsyncClient(
-        headers={"User-Agent": get_random_useragent()}
+        headers={"User-Agent": get_random_useragent()},
+        follow_redirects=True,
+        max_redirects=32
     ) as client:
         data = await client.get(url)
         for score, explanation, match in explain_verification(data.text):
