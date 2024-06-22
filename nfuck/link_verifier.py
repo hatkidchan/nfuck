@@ -25,7 +25,7 @@ REGEX_PATTERNS: list[tuple[float, Pattern, str]] = [
     (1.0, regexp(r"\bp2e\b", IGNORECASE), "Play-to-earn keyword"),
     (5.0, regexp(r"play\-to\-earn", IGNORECASE), "Play-to-earn directly"),
     (15.0, regexp(r"encryption\.js", IGNORECASE), "encryption.js"),
-    (15.0, regexp(r"web3-ethers\.js", IGNORECASE), "web3-ethers.js"),
+    (30.0, regexp(r"web3-ethers\.js", IGNORECASE), "web3-ethers.js"),
     (1.0, regexp(r"\bweb3\b", IGNORECASE), "Web3 mention"),
     (1.0, regexp(r"\bnft\b", IGNORECASE), "NFT mention"),
     (3.0, regexp(r"What The Fluff | CLAIM ALL !", IGNORECASE), "WTF Claim all"),
