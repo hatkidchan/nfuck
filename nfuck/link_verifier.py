@@ -36,6 +36,8 @@ REGEX_PATTERNS: list[tuple[float, Pattern, str]] = [
     (3.0, regexp(r"fluff (token|coin)", IGNORECASE), "fluff token/coin"),
     (3.0, regexp(r"A collection of \w+ NFTs", IGNORECASE), "Collection of [some] NFTs"),
     (5.0, regexp(r"claim free \$\w+", IGNORECASE), "Claim free shitcoin"),
+    (5.0, regexp(r"avoid obstacles to gain \$\w+", IGNORECASE), "play to gain"),
+    (5.0, regexp(r"fetch free crypto rewards", IGNORECASE), "free crypto! yay!"),
     (12.0, regexp(r"melondrop.app", IGNORECASE), "Sus developer URL")
 ]
 
