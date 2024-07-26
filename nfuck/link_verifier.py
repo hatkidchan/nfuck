@@ -38,7 +38,10 @@ REGEX_PATTERNS: list[tuple[float, Pattern, str]] = [
     (5.0, regexp(r"claim free \$\w+", IGNORECASE), "Claim free shitcoin"),
     (5.0, regexp(r"avoid obstacles to gain \$\w+", IGNORECASE), "play to gain"),
     (5.0, regexp(r"fetch free crypto rewards", IGNORECASE), "free crypto! yay!"),
-    (12.0, regexp(r"melondrop.app", IGNORECASE), "Sus developer URL")
+    (12.0, regexp(r"melondrop.app", IGNORECASE), "Sus developer URL"),
+    (12.0, regexp(r"airdrop-blum.fun", IGNORECASE), "Blum airdrop"),
+    (8, regexp(r"Claim \w+ and \w+ them all", IGNORECASE), "Claim X and X them all"),
+    (4, regexp(r"choose \w+. connect wallet", IGNORECASE), "We all can hear you, stop saying it bajilion times")
 ]
 
 MAX_SCORE = 30 # sum(t[0] for t in REGEX_PATTERNS)
