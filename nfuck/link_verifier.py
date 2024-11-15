@@ -1,5 +1,5 @@
 from typing import NamedTuple, Optional
-from httpx import AsyncClient
+from httpx import AsyncClient, AsyncHTTPTransport
 from re import Match, Pattern, compile as regexp, IGNORECASE
 from random import choice
 from logging import DEBUG, getLogger
@@ -46,6 +46,7 @@ REGEX_PATTERNS: list[tuple[float, Pattern, str]] = [
 
 MAX_SCORE = 30 # sum(t[0] for t in REGEX_PATTERNS)
 
+transport = AsyncHTTPTransport(retries=5)
 
 def explain_verification(content: str) -> list[tuple[float, str, Match]]:
     result: list[tuple[float, str, Match]] = []
@@ -74,7 +75,8 @@ async def verify_link(url: str) -> float:
     async with AsyncClient(
         headers={"User-Agent": get_random_useragent()},
         follow_redirects=True,
-        max_redirects=32
+        max_redirects=32,
+        transport=transport
     ) as client:
         data = await client.get(url)
         for score, explanation, match in explain_verification(data.text):
