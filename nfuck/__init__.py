@@ -40,6 +40,8 @@ async def on_check(message: Message):
                 entity.url = "https://" + entity.url
             urls.append(entity.url)
     for url in urls:
+        if not url:
+            continue
         async with AsyncClient(
             headers={"User-Agent": get_random_useragent()}
         ) as client:
