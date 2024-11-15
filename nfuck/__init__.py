@@ -41,9 +41,12 @@ async def on_check(message: Message):
                 data = (await client.get(entity.url)).text
                 total_score = 0
                 results.append(f"<b>{sanitize_link(entity.url)}</b>")
-                for score, explanation, match in explain_verification(data):
-                    results.append(f"{match.span()}: {explanation}")
+                counts = {}
+                for score, explanation, _ in explain_verification(data):
+                    counts[explanation] = counts.get(explanation, 0) + 1
                     total_score += score
+                for explanation, count in counts.items():
+                    results.append(f"<i>{explanation}</i>: <b>x{count}</b>")
                 results.append(f"<b>Total score: {total_score}</b>")
                 results.append("")
     if results:
