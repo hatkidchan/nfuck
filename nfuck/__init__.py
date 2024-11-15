@@ -25,6 +25,9 @@ SILENT_REMOVAL_IDS: set[int] = set(list(map(int, filter(lambda v: v, getenv("SIL
 @dp.message(Command("check"))
 async def on_check(message: Message):
     results = []
+    urls = []
+    if message.link_preview_options:
+        urls.append(message.link_preview_options.url)
     for entity in message.entities or []:
         if entity.type in ("text_link", "url") and message.text:
             if entity.type == "url":
@@ -35,20 +38,22 @@ async def on_check(message: Message):
                 continue
             if not entity.url.startswith("http"):
                 entity.url = "https://" + entity.url
-            async with AsyncClient(
-                headers={"User-Agent": get_random_useragent()}
-            ) as client:
-                data = (await client.get(entity.url)).text
-                total_score = 0
-                results.append(f"<b>{sanitize_link(entity.url)}</b>")
-                counts = {}
-                for score, explanation, _ in explain_verification(data):
-                    counts[explanation] = counts.get(explanation, 0) + 1
-                    total_score += score
-                for explanation, count in counts.items():
-                    results.append(f"<i>{explanation}</i>: <b>x{count}</b>")
-                results.append(f"<b>Total score: {total_score}</b>")
-                results.append("")
+            urls.append(entity.url)
+    for url in urls:
+        async with AsyncClient(
+            headers={"User-Agent": get_random_useragent()}
+        ) as client:
+            data = (await client.get(url)).text
+            total_score = 0
+            results.append(f"<b>{sanitize_link(url)}</b>")
+            counts = {}
+            for score, explanation, _ in explain_verification(data):
+                counts[explanation] = counts.get(explanation, 0) + 1
+                total_score += score
+            for explanation, count in counts.items():
+                results.append(f"<i>{explanation}</i>: <b>x{count}</b>")
+            results.append(f"<b>Total score: {total_score}</b>")
+            results.append("")
     if results:
         await message.reply(
             str.join("\n", results),
@@ -73,7 +78,10 @@ async def on_force(message: Message):
     if not message.reply_to_message:
         return
     detected_links: list[tuple[str, float]] = []
-    for entity in message.reply_to_message.entities or []:
+    urls = []
+    if message.link_preview_options:
+        urls.append(message.link_preview_options.url)
+    for entity in message.entities or []:
         if entity.type in ("text_link", "url") and message.text:
             if entity.type == "url":
                 entity.url = message.text[
@@ -81,8 +89,12 @@ async def on_force(message: Message):
                 ]
             if not entity.url:
                 continue
-            confidence = await verify_link(entity.url)
-            detected_links.append((entity.url, confidence))
+            if not entity.url.startswith("http"):
+                entity.url = "https://" + entity.url
+            urls.append(entity.url)
+    for url in urls:
+        confidence = await verify_link(url)
+        detected_links.append((url, confidence))
     n_links = len(detected_links)
     n_harmful = len(list(filter(lambda lnk: lnk[1] > 0.9, detected_links)))
     if n_harmful > 0:
@@ -106,6 +118,9 @@ def form_for(message: Message, link: str) -> str:
 @dp.message()
 async def on_message(message: Message):
     detected_links: list[tuple[str, float]] = []
+    urls = []
+    if message.link_preview_options:
+        urls.append(message.link_preview_options.url)
     for entity in message.entities or []:
         if entity.type in ("text_link", "url") and message.text:
             if entity.type == "url":
@@ -114,9 +129,13 @@ async def on_message(message: Message):
                 ]
             if not entity.url:
                 continue
-            confidence = await verify_link(entity.url)
-            if confidence > 0.9:
-                detected_links.append((entity.url, confidence))
+            if not entity.url.startswith("http"):
+                entity.url = "https://" + entity.url
+            urls.append(entity.url)
+    for url in urls:
+        confidence = await verify_link(url)
+        if confidence > 0.9:
+            detected_links.append((url, confidence))
     if detected_links:
         await message.delete()
         if message.from_user and message.chat.id not in SILENT_REMOVAL_IDS:
