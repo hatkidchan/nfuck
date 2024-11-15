@@ -61,6 +61,7 @@ def get_random_useragent() -> str:
 
 
 async def verify_link(url: str) -> float:
+    if not url: return 0
     total_score = 0
     logger.info("Verifying link %s", url)
     if not url.startswith("http"):
