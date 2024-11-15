@@ -5,6 +5,7 @@ from aiogram.filters import Command
 from httpx import AsyncClient
 from asyncio import sleep
 from urllib.parse import urlencode
+from logging import DEBUG, getLogger
 
 from nfuck.link_verifier import (
     explain_verification,
@@ -15,6 +16,8 @@ from nfuck.utils import sanitize_link
 
 
 dp = Dispatcher()
+logger = getLogger("nfuck.__init__")
+logger.setLevel(DEBUG)
 
 SILENT_REMOVAL_IDS: set[int] = set(list(map(int, filter(lambda v: v, getenv("SILENT_REMOVAL_IDS", "").split(",")))))
 
@@ -51,6 +54,16 @@ async def on_check(message: Message):
         )
     else:
         await message.reply(":shrug:")
+
+@dp.message(Command("dump"))
+async def on_dump(message: Message):
+    logger.info(message.model_dump_json())
+    kinky = ""
+    if message.from_user and message.from_user.id != 548392265:
+        kinky = " Too bad you probably can't read it"
+    msg = await message.reply("Message JSON *should* be in logs now." + kinky)
+    await sleep(3)
+    await msg.delete()
 
 @dp.message(Command("force"))
 async def on_force(message: Message):
