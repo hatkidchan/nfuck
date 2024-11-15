@@ -77,14 +77,15 @@ async def on_dump(message: Message):
 async def on_force(message: Message):
     if not message.reply_to_message:
         return
+    reply = message.reply_to_message
     detected_links: list[tuple[str, float]] = []
     urls = []
-    if message.link_preview_options:
-        urls.append(message.link_preview_options.url)
-    for entity in message.entities or []:
-        if entity.type in ("text_link", "url") and message.text:
+    if reply.link_preview_options:
+        urls.append(reply.link_preview_options.url)
+    for entity in reply.entities or []:
+        if entity.type in ("text_link", "url") and reply.text:
             if entity.type == "url":
-                entity.url = message.text[
+                entity.url = reply.text[
                     entity.offset : entity.offset + entity.length
                 ]
             if not entity.url:
@@ -98,7 +99,7 @@ async def on_force(message: Message):
     n_links = len(detected_links)
     n_harmful = len(list(filter(lambda lnk: lnk[1] > 0.9, detected_links)))
     if n_harmful > 0:
-        await message.reply_to_message.delete()
+        await reply.delete()
         await message.reply(f"Found {n_links} links, {n_harmful} of which look sus")
     elif not detected_links:
         await message.reply(f"No links found")
