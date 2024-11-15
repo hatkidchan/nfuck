@@ -6,4 +6,7 @@ Running in Docker:
 docker build -t nfuck .
 docker run --restart=unless-stopped --name bot-nfuck -e TG_BOT_TOKEN=123:blah -e DB_PATH=/app/db.db3 -d nfuck
 
+Alternatively, copy docker-compose.example.yml and edit it a bit and then run:
+docker compose build . && docker compose up -d
+
 You can also add `-e SILENT_REMOVAL_IDS=123,456` with a comma-separated list of chats where it should silently remove messages without notifying anyone

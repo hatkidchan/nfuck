@@ -1,0 +1,34 @@
+services:
+  ## Uncomment this section and nfuck.network_mode to pass everything thru WireGuard.
+  ## Put your wg.conf into ./wg/wg_confs/
+  # wireguard:
+  #   image: lscr.io/linuxserver/wireguard
+  #   container_name: bot-nfuck-wg
+  #   cap_add:
+  #     - NET_ADMIN
+  #     - SYS_MODULE
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=Europe/Moscow
+  #   volumes:
+  #     - ./wg:/config
+  #     - /lib/modules:/lib/modules
+  #   sysctls:
+  #     - net.ipv4.conf.all.src_valid_mark=1
+  #   restart: unless-stopped
+  nfuck:
+    image: nfuck
+    build: .
+    container_name: bot-nfuck
+    restart: unless-stopped
+  #   network_mode: service:wireguard
+    environment:
+      ## comma-separated list of domaisn that won't be processed.
+      - "DOMAIN_WHITELIST=vk.com,*.vk.com,*.forbes.com,forbes.com,*.wikipedia.org,wikipedia.org,fragment.com,youtube.com"
+      ## uncomment and fill with comma-separated list of chat IDs where it should just remove without any message
+      #- "SILENT_REMOVAL_IDS="
+      ## currently unused
+      - "DB_PATH=/app/db.db3"
+      ## talk to @botfather
+      - "TG_BOT_TOKEN=CHANGEME"
