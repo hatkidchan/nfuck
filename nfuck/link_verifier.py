@@ -83,8 +83,9 @@ async def recurse_into_telegraph(url: str, _depth: int = 0) -> float:
         page = (await client.get(f"https://api.telegra.ph/getPage/{page_id}", params={
             "return_content": True
         })).json()["result"]
-        for link in _tgraph_find_links(page["content"]):
-            total_score += await verify_link(link, _depth + 1)
+        for element in page["content"]:
+            for link in _tgraph_find_links(element):
+                total_score += await verify_link(link, _depth + 1)
     return total_score
 
 
