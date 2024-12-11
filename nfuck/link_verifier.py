@@ -64,7 +64,9 @@ async def recurse_into_telegraph(url: str, _depth: int = 0) -> float:
     parsed_url = urlparse(url)
     page_id = parsed_url.path.lstrip("/")
 
-    def _tgraph_find_links(tag: dict) -> list[str]:
+    def _tgraph_find_links(tag: dict | str) -> list[str]:
+        if isinstance(tag, str):
+            return []
         if tag["tag"] == "a":
             return [tag["attrs"]["href"]]
         else:
