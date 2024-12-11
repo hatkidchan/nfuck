@@ -60,8 +60,39 @@ def get_random_useragent() -> str:
     return choice(USER_AGENT)
 
 
-async def verify_link(url: str) -> float:
+async def recurse_into_telegraph(url: str, _depth: int = 0) -> float:
+    _, page_id = url.split("/", 1)
+
+    def _tgraph_find_links(tag: dict) -> list[str]:
+        if tag["tag"] == "a":
+            return [tag["attrs"]["href"]]
+        else:
+            return sum([
+                _tgraph_find_links(child)
+                for child in tag.get("children", [])
+            ], start=[])
+
+    total_score = 0
+    async with AsyncClient(
+        headers={"User-Agent": get_random_useragent()},
+        follow_redirects=True,
+        max_redirects=32,
+        transport=transport
+    ) as client:
+        page = (await client.get(f"https://api.telegra.ph/getPage/{page_id}", params={
+            "return_content": True
+        })).json()
+        for link in _tgraph_find_links(page["content"]):
+            total_score += await verify_link(link, _depth + 1)
+    return total_score
+
+
+
+async def verify_link(url: str, _depth: int = 0) -> float:
     if not url: return 0
+    if _depth > 10:
+        logger.error("Too deep, bailing out!")
+        return 0
     total_score = 0
     logger.info("Verifying link %s", url)
     if not url.startswith("http"):
@@ -84,4 +115,8 @@ async def verify_link(url: str) -> float:
             logger.debug("%s: %s at %d", url, explanation, match.start())
             total_score += score
     logger.info("Score for %r: %f", url, total_score)
+
+    if domain == "telegra.ph":
+        total_score += await recurse_into_telegraph(url, _depth + 1)
+
     return total_score / MAX_SCORE
