@@ -61,7 +61,8 @@ def get_random_useragent() -> str:
 
 
 async def recurse_into_telegraph(url: str, _depth: int = 0) -> float:
-    _, page_id = url.split("/", 1)
+    parsed_url = urlparse(url)
+    page_id = parsed_url.path.lstrip("/")
 
     def _tgraph_find_links(tag: dict) -> list[str]:
         if tag["tag"] == "a":
