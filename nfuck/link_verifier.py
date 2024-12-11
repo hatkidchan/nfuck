@@ -87,9 +87,10 @@ async def recurse_into_telegraph(url: str, _depth: int = 0) -> float:
         })).json()["result"]
         for element in page["content"]:
             for link in _tgraph_find_links(element):
+                logger.info("Going deeper into %s", link)
                 total_score += await verify_link(link, _depth + 1)
+    logger.info("Recursive Telegraph returned: %f", total_score)
     return total_score
-
 
 
 async def verify_link(url: str, _depth: int = 0) -> float:
@@ -118,9 +119,10 @@ async def verify_link(url: str, _depth: int = 0) -> float:
         for score, explanation, match in explain_verification(data.text):
             logger.debug("%s: %s at %d", url, explanation, match.start())
             total_score += score
-    logger.info("Score for %r: %f", url, total_score)
 
     if domain == "telegra.ph":
         total_score += await recurse_into_telegraph(url, _depth + 1)
+
+    logger.info("Score for %r: %f", url, total_score)
 
     return total_score / MAX_SCORE
