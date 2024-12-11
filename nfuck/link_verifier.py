@@ -90,7 +90,7 @@ async def recurse_into_telegraph(url: str, _depth: int = 0) -> float:
                 logger.info("Going deeper into %s", link)
                 total_score += await verify_link(link, _depth + 1)
     logger.info("Recursive Telegraph returned: %f", total_score)
-    return total_score
+    return total_score * MAX_SCORE
 
 
 async def verify_link(url: str, _depth: int = 0) -> float:
