@@ -6,6 +6,7 @@ from httpx import AsyncClient
 from asyncio import sleep
 from urllib.parse import urlencode
 from logging import DEBUG, getLogger
+from random import choice
 
 from nfuck.link_verifier import (
     explain_verification,
@@ -82,6 +83,26 @@ async def on_dump(message: Message):
     msg = await message.reply("Message JSON *should* be in logs now." + kinky)
     await sleep(3)
     await msg.delete()
+
+
+@dp.message(Command("isitakinkybot"))
+async def on_is_kinky(message: Message):
+    await message.reply(
+        choice(
+            [
+                "Yes",
+                "Very",
+                "Perhaps",
+                "Maybe",
+                "Possibly",
+                "Same as you",
+                "Definitely",
+                "Absolutely",
+                "Meow :3",
+                "If you insist",
+            ]
+        )
+    )
 
 
 @dp.message(Command("force"))
