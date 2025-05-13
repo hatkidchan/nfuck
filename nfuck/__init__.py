@@ -19,7 +19,14 @@ dp = Dispatcher()
 logger = getLogger("nfuck.__init__")
 logger.setLevel(DEBUG)
 
-SILENT_REMOVAL_IDS: set[int] = set(list(map(int, filter(lambda v: v, getenv("SILENT_REMOVAL_IDS", "").split(",")))))
+SILENT_REMOVAL_IDS: set[int] = set(
+    list(
+        map(
+            int,
+            filter(lambda v: v, getenv("SILENT_REMOVAL_IDS", "").split(",")),
+        )
+    )
+)
 
 
 @dp.message(Command("check"))
@@ -65,6 +72,7 @@ async def on_check(message: Message):
     else:
         await message.reply(":shrug:")
 
+
 @dp.message(Command("dump"))
 async def on_dump(message: Message):
     logger.info(message.model_dump_json())
@@ -74,6 +82,7 @@ async def on_dump(message: Message):
     msg = await message.reply("Message JSON *should* be in logs now." + kinky)
     await sleep(3)
     await msg.delete()
+
 
 @dp.message(Command("force"))
 async def on_force(message: Message):
@@ -102,18 +111,27 @@ async def on_force(message: Message):
     n_harmful = len(list(filter(lambda lnk: lnk[1] > 0.9, detected_links)))
     if n_harmful > 0:
         await reply.delete()
-        await message.reply(f"Found {n_links} links, {n_harmful} of which look sus")
+        await message.reply(
+            f"Found {n_links} links, {n_harmful} of which look sus"
+        )
     elif not detected_links:
         await message.reply(f"No links found")
     else:
         await message.reply(f"Out of {n_links}, none pass minimal threshold")
 
+
 FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScPby92blkuDRcbsb9kAQ35tK3EXYtXVFwgGBMlp6REw_ZNgw/viewform"
+
+
 def form_for(message: Message, link: str) -> str:
     assert message.from_user != None
     params = {
         "entry.1873578193": link,
-        "entry.1733286388": f"@{message.from_user.username}" if message.from_user.username else ""
+        "entry.1733286388": (
+            f"@{message.from_user.username}"
+            if message.from_user.username
+            else ""
+        ),
     }
     return f"{FORM_URL}?{urlencode(params)}"
 
@@ -161,7 +179,8 @@ async def on_message(message: Message):
                         ),
                         f"Sender: {message.from_user.full_name} #{message.from_user.id} (@{message.from_user.username})",
                         "(message will be deleted in 20 seconds)",
-                        "False positive? Report <a href=\"%s\">here</a>!" % form_for(message, detected_links[0][0])
+                        'False positive? Report <a href="%s">here</a>!'
+                        % form_for(message, detected_links[0][0]),
                     ],
                 ),
                 parse_mode="html",

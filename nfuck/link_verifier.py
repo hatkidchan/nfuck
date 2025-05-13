@@ -20,7 +20,7 @@ DOMAIN_WHITELIST: set[str] = set(
 
 USER_AGENT = [
     "Mozilla/5.0 (X11; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0",
-    "Mozilla/5.0 (X11; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0"
+    "Mozilla/5.0 (X11; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0",
 ]
 
 URL_PATTERNS: list[tuple[float, Pattern, str]] = [
