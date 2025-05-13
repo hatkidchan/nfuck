@@ -6,26 +6,33 @@ from logging import DEBUG, getLogger
 from os import getenv
 from urllib.parse import urlparse
 from fnmatch import fnmatch
+import asyncio
+from json import load as load_json
+import logging.config
 
 logger = getLogger("nfuck.link_verifier")
 logger.setLevel(DEBUG)
 
 # TODO: get it out of here somehow
-DOMAIN_WHITELIST: set[str] = set(filter(lambda v: v, getenv("DOMAIN_WHITELIST", "").split(",")))
+DOMAIN_WHITELIST: set[str] = set(
+    filter(lambda v: v, getenv("DOMAIN_WHITELIST", "").split(","))
+)
 
 USER_AGENT = [
-    "Mozilla/5.0 (X11; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0"
+    "Mozilla/5.0 (X11; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0",
+    "Mozilla/5.0 (X11; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0"
 ]
 
 URL_PATTERNS: list[tuple[float, Pattern, str]] = [
     (30.0, regexp(r"https://t.me/\w+[bB]ot/claim"), "Telegram Bot claim link")
 ]
 
+# fmt:off
 REGEX_PATTERNS: list[tuple[float, Pattern, str]] = [
     (1.0, regexp(r"\bp2e\b", IGNORECASE), "Play-to-earn keyword"),
     (5.0, regexp(r"play\-to\-earn", IGNORECASE), "Play-to-earn directly"),
     (15.0, regexp(r"encryption\.js", IGNORECASE), "encryption.js"),
-    (30.0, regexp(r"web3-ethers\.js", IGNORECASE), "web3-ethers.js"),
+    (30.0, regexp(r"web3-ethers?\.js", IGNORECASE), "web3-ethers.js"),
     (1.0, regexp(r"\bweb3\b", IGNORECASE), "Web3 mention"),
     (1.0, regexp(r"\bnft\b", IGNORECASE), "NFT mention"),
     (3.0, regexp(r"What The Fluff | CLAIM ALL !", IGNORECASE), "WTF Claim all"),
@@ -40,13 +47,16 @@ REGEX_PATTERNS: list[tuple[float, Pattern, str]] = [
     (5.0, regexp(r"fetch free crypto rewards", IGNORECASE), "free crypto! yay!"),
     (12.0, regexp(r"melondrop.app", IGNORECASE), "Sus developer URL"),
     (12.0, regexp(r"airdrop-blum.fun", IGNORECASE), "Blum airdrop"),
+    (12.0, regexp(r"mlef\.world", IGNORECASE), "Mlef"),
     (8, regexp(r"Claim \w+ and \w+ them all", IGNORECASE), "Claim X and X them all"),
     (4, regexp(r"choose \w+. connect wallet", IGNORECASE), "We all can hear you, stop saying it bajilion times")
 ]
+# fmt:on
 
-MAX_SCORE = 30 # sum(t[0] for t in REGEX_PATTERNS)
+MAX_SCORE = 30  # sum(t[0] for t in REGEX_PATTERNS)
 
 transport = AsyncHTTPTransport(retries=5)
+
 
 def explain_verification(content: str) -> list[tuple[float, str, Match]]:
     result: list[tuple[float, str, Match]] = []
@@ -70,21 +80,27 @@ async def recurse_into_telegraph(url: str, _depth: int = 0) -> float:
         if tag["tag"] == "a":
             return [tag["attrs"]["href"]]
         else:
-            return sum([
-                _tgraph_find_links(child)
-                for child in tag.get("children", [])
-            ], start=[])
+            return sum(
+                [
+                    _tgraph_find_links(child)
+                    for child in tag.get("children", [])
+                ],
+                start=[],
+            )
 
     total_score = 0
     async with AsyncClient(
         headers={"User-Agent": get_random_useragent()},
         follow_redirects=True,
         max_redirects=32,
-        transport=transport
+        transport=transport,
     ) as client:
-        page = (await client.get(f"https://api.telegra.ph/getPage/{page_id}", params={
-            "return_content": True
-        })).json()["result"]
+        page = (
+            await client.get(
+                f"https://api.telegra.ph/getPage/{page_id}",
+                params={"return_content": True},
+            )
+        ).json()["result"]
         for element in page["content"]:
             for link in _tgraph_find_links(element):
                 logger.info("Going deeper into %s", link)
@@ -94,7 +110,8 @@ async def recurse_into_telegraph(url: str, _depth: int = 0) -> float:
 
 
 async def verify_link(url: str, _depth: int = 0) -> float:
-    if not url: return 0
+    if not url:
+        return 0
     if _depth > 10:
         logger.error("Too deep, bailing out!")
         return 0
@@ -113,7 +130,7 @@ async def verify_link(url: str, _depth: int = 0) -> float:
         headers={"User-Agent": get_random_useragent()},
         follow_redirects=True,
         max_redirects=32,
-        transport=transport
+        transport=transport,
     ) as client:
         data = await client.get(url)
         for score, explanation, match in explain_verification(data.text):
@@ -126,3 +143,16 @@ async def verify_link(url: str, _depth: int = 0) -> float:
     logger.info("Score for %r: %f", url, total_score)
 
     return total_score / MAX_SCORE
+
+
+async def main(links: list[str]):
+    scores = await asyncio.gather(*[verify_link(url) for url in links])
+    print(scores)
+
+
+if __name__ == "__main__":
+    from sys import argv
+
+    with open("logging.json", "r") as f_in:
+        logging.config.dictConfig(load_json(f_in))
+    asyncio.run(main(argv[1:]))
