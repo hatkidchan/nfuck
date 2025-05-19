@@ -29,6 +29,8 @@ SILENT_REMOVAL_IDS: set[int] = set(
     )
 )
 
+BOT_BLACKLIST: set[str] = set(getenv("BOT_BLACKLIST", "").split(","))
+
 
 @dp.message(Command("check"))
 async def on_check(message: Message):
@@ -47,6 +49,10 @@ async def on_check(message: Message):
             if not entity.url.startswith("http"):
                 entity.url = "https://" + entity.url
             urls.append(entity.url)
+        if entity.type == "mention" and message.text:
+            username = message.text[entity.offset : entity.offset + entity.length]
+            if username.lstrip("@") in BOT_BLACKLIST:
+                pass
     for url in urls:
         if not url:
             continue
