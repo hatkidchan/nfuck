@@ -1,4 +1,3 @@
-from typing import NamedTuple, Optional
 from httpx import AsyncClient, AsyncHTTPTransport
 from re import Match, Pattern, compile as regexp, IGNORECASE
 from random import choice
@@ -19,7 +18,7 @@ DOMAIN_WHITELIST: set[str] = set(
 )
 
 USER_AGENT = [
-    "TelegramBot (like TwitterBot)",
+    "NfuckBot/1.0 (like TelegramBot) (like TwitterBot)",
 ]
 
 STRIP_CHARACTERS = {
