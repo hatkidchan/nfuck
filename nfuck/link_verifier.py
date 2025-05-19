@@ -22,6 +22,10 @@ USER_AGENT = [
     "TelegramBot (like TwitterBot)",
 ]
 
+STRIP_CHARACTERS = {
+    chr(0x2068)
+}
+
 URL_PATTERNS: list[tuple[float, Pattern, str]] = [
     (30.0, regexp(r"https://t.me/\w+[bB]ot/claim"), "Telegram Bot claim link")
 ]
@@ -32,6 +36,8 @@ REGEX_PATTERNS: list[tuple[float, Pattern, str]] = [
     (5.0, regexp(r"play\-to\-earn", IGNORECASE), "Play-to-earn directly"),
     (15.0, regexp(r"encryption\.js", IGNORECASE), "encryption.js"),
     (30.0, regexp(r"web3-ethers?\.js", IGNORECASE), "web3-ethers.js"),
+    (30.0, regexp(r"ethereumjs-tx", IGNORECASE), "web3-ethers.js"),
+    (30.0, regexp(r"web3.min.js", IGNORECASE), "web3-ethers.js"),
     (1.0, regexp(r"\bweb3\b", IGNORECASE), "Web3 mention"),
     (1.0, regexp(r"\bnft\b", IGNORECASE), "NFT mention"),
     (3.0, regexp(r"What The Fluff | CLAIM ALL !", IGNORECASE), "WTF Claim all"),
@@ -132,7 +138,10 @@ async def verify_link(url: str, _depth: int = 0) -> float:
         transport=transport,
     ) as client:
         data = await client.get(url)
-        for score, explanation, match in explain_verification(data.text):
+        content = data.text
+        for character in STRIP_CHARACTERS:
+            content = content.replace(character, "")
+        for score, explanation, match in explain_verification(content):
             logger.debug("%s: %s at %d", url, explanation, match.start())
             total_score += score
 
