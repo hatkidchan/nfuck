@@ -21,9 +21,7 @@ USER_AGENT = [
     "NfuckBot/1.0 (like TelegramBot) (like TwitterBot)",
 ]
 
-STRIP_CHARACTERS = {
-    chr(0x2068)
-}
+STRIP_CHARACTERS = {chr(0x2068)}
 
 URL_PATTERNS: list[tuple[float, Pattern, str]] = [
     (30.0, regexp(r"https://t.me/\w+[bB]ot/claim"), "Telegram Bot claim link")
@@ -98,6 +96,7 @@ async def recurse_into_telegraph(url: str, _depth: int = 0) -> float:
         follow_redirects=True,
         max_redirects=32,
         transport=transport,
+        verify=False,
     ) as client:
         page = (
             await client.get(

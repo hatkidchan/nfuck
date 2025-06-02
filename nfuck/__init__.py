@@ -2,7 +2,7 @@ from os import getenv
 from aiogram import Dispatcher
 from aiogram.types import Message
 from aiogram.filters import Command
-from httpx import AsyncClient
+from httpx import AsyncClient, AsyncHTTPTransport
 from asyncio import sleep
 from urllib.parse import urlencode
 from logging import DEBUG, getLogger
@@ -50,14 +50,20 @@ async def on_check(message: Message):
                 entity.url = "https://" + entity.url
             urls.append(entity.url)
         if entity.type == "mention" and message.text:
-            username = message.text[entity.offset : entity.offset + entity.length]
+            username = message.text[
+                entity.offset : entity.offset + entity.length
+            ]
             if username.lstrip("@") in BOT_BLACKLIST:
                 pass
     for url in urls:
         if not url:
             continue
         async with AsyncClient(
-            headers={"User-Agent": get_random_useragent()}
+            headers={"User-Agent": get_random_useragent()},
+            transport=AsyncHTTPTransport(retries=5),
+            follow_redirects=True,
+            max_redirects=32,
+            verify=False,
         ) as client:
             data = (await client.get(url)).text
             total_score = 0
