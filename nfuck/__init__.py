@@ -2,17 +2,12 @@ from os import getenv
 from aiogram import Dispatcher
 from aiogram.types import Message
 from aiogram.filters import Command
-from httpx import AsyncClient, AsyncHTTPTransport
 from asyncio import sleep
 from urllib.parse import urlencode
 from logging import DEBUG, getLogger
 from random import choice
 
-from nfuck.link_verifier import (
-    explain_verification,
-    get_random_useragent,
-    verify_link,
-)
+from nfuck.link_verifier import verify_link
 from nfuck.utils import sanitize_link
 
 
@@ -30,60 +25,6 @@ SILENT_REMOVAL_IDS: set[int] = set(
 )
 
 BOT_BLACKLIST: set[str] = set(getenv("BOT_BLACKLIST", "").split(","))
-
-
-@dp.message(Command("check"))
-async def on_check(message: Message):
-    results = []
-    urls = []
-    if message.link_preview_options:
-        urls.append(message.link_preview_options.url)
-    for entity in message.entities or []:
-        if entity.type in ("text_link", "url") and message.text:
-            if entity.type == "url":
-                entity.url = message.text[
-                    entity.offset : entity.offset + entity.length
-                ]
-            if not entity.url:
-                continue
-            if not entity.url.startswith("http"):
-                entity.url = "https://" + entity.url
-            urls.append(entity.url)
-        if entity.type == "mention" and message.text:
-            username = message.text[
-                entity.offset : entity.offset + entity.length
-            ]
-            if username.lstrip("@") in BOT_BLACKLIST:
-                pass
-    for url in urls:
-        if not url:
-            continue
-        async with AsyncClient(
-            headers={"User-Agent": get_random_useragent()},
-            transport=AsyncHTTPTransport(retries=5),
-            follow_redirects=True,
-            max_redirects=32,
-            verify=False,
-        ) as client:
-            data = (await client.get(url)).text
-            total_score = 0
-            results.append(f"<b>{sanitize_link(url)}</b>")
-            counts = {}
-            for score, explanation, _ in explain_verification(data):
-                counts[explanation] = counts.get(explanation, 0) + 1
-                total_score += score
-            for explanation, count in counts.items():
-                results.append(f"<i>{explanation}</i>: <b>x{count}</b>")
-            results.append(f"<b>Total score: {total_score}</b>")
-            results.append("")
-    if results:
-        await message.reply(
-            str.join("\n", results),
-            parse_mode="html",
-            disable_web_page_preview=True,
-        )
-    else:
-        await message.reply(":shrug:")
 
 
 @dp.message(Command("dump"))
@@ -123,6 +64,7 @@ async def on_force(message: Message):
         return
     reply = message.reply_to_message
     detected_links: list[tuple[str, float]] = []
+    errored_links: list[tuple[str, Exception]] = []
     urls = []
     if reply.link_preview_options:
         urls.append(reply.link_preview_options.url)
@@ -139,19 +81,26 @@ async def on_force(message: Message):
                 entity.url = "https://" + entity.url
             urls.append(entity.url)
     for url in urls:
-        confidence = await verify_link(url)
-        detected_links.append((url, confidence))
+        try:
+            confidence = await verify_link(url)
+            detected_links.append((url, confidence))
+        except Exception as e:
+            errored_links.append((url, e))
     n_links = len(detected_links)
     n_harmful = len(list(filter(lambda lnk: lnk[1] > 0.9, detected_links)))
+
+    response = ":shrug:"
+
     if n_harmful > 0:
         await reply.delete()
-        await message.reply(
-            f"Found {n_links} links, {n_harmful} of which look sus"
-        )
+        response = f"Found {n_links} links, {n_harmful} of which look sus"
     elif not detected_links:
-        await message.reply(f"No links found")
+        response = f"No links found"
     else:
-        await message.reply(f"Out of {n_links}, none pass minimal threshold")
+        response = f"Out of {n_links}, none pass minimal threshold"
+    if errored_links:
+        response += f"\n{len(errored_links)} links failed"
+    await message.reply(response)
 
 
 FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScPby92blkuDRcbsb9kAQ35tK3EXYtXVFwgGBMlp6REw_ZNgw/viewform"
