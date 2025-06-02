@@ -134,6 +134,7 @@ async def verify_link(url: str, _depth: int = 0) -> float:
         follow_redirects=True,
         max_redirects=32,
         transport=transport,
+        verify=False,
     ) as client:
         data = await client.get(url)
         content = data.text
