@@ -120,10 +120,11 @@ async def on_force(message: Message):
     urls = []
     if reply.link_preview_options:
         urls.append(reply.link_preview_options.url)
+    text = reply.caption or reply.text
     for entity in reply.caption_entities or reply.entities or []:
-        if entity.type in ("text_link", "url") and reply.text:
+        if entity.type in ("text_link", "url") and text:
             if entity.type == "url":
-                entity.url = reply.text[
+                entity.url = text[
                     entity.offset : entity.offset + entity.length
                 ]
             if not entity.url:
@@ -169,10 +170,11 @@ async def on_message(message: Message):
     urls = []
     if message.link_preview_options:
         urls.append(message.link_preview_options.url)
+    text = message.caption or message.text
     for entity in message.caption_entities or message.entities or []:
-        if entity.type in ("text_link", "url") and message.text:
+        if entity.type in ("text_link", "url") and text:
             if entity.type == "url":
-                entity.url = message.text[
+                entity.url = text[
                     entity.offset : entity.offset + entity.length
                 ]
             if not entity.url:
