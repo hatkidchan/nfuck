@@ -24,7 +24,9 @@ SILENT_REMOVAL_IDS: set[int] = set(
     )
 )
 
-BOT_BLACKLIST: set[str] = set(getenv("BOT_BLACKLIST", "").split(","))
+BOT_BLACKLIST: set[str] = set(
+    map(str.lower, getenv("BOT_BLACKLIST", "").split(","))
+)
 
 
 @dp.message(Command("dump"))
@@ -137,6 +139,11 @@ async def on_message(message: Message):
             if not entity.url.startswith("http"):
                 entity.url = "https://" + entity.url
             urls.append(entity.url)
+        elif entity.type == "mention" and text:
+            bot_name = text[entity.offset : entity.offset + entity.length]
+            if bot_name.lstrip("@").lower() in BOT_BLACKLIST:
+                detected_links.append((bot_name, 1.0))
+
     for url in urls:
         confidence = await verify_link(url)
         if confidence > 0.9:
